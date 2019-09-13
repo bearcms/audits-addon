@@ -52,7 +52,7 @@ class Audits
         $app = App::get();
         $data = [];
         $data['id'] = $id;
-        $data['url'] = 'https://alle-example.alle.bg/'; //$app->urls->get('/'); // TEMP
+        $data['url'] = $app->urls->get('/');
         $data['pages'] = null;
         $data['allowSearchEngines'] = null;
         $data['errors'] = [];

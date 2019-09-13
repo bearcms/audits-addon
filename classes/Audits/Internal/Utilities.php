@@ -86,7 +86,6 @@ class Utilities
                 'definitionID' => 'bearcms-audits-check-page',
                 'data' => ['id' => $id, 'pageID' => $pageID]
             ];
-            //break; // TEMP
         }
         self::setData($id, $data);
         if (!empty($tasksData)) {
@@ -144,7 +143,6 @@ class Utilities
                             'definitionID' => 'bearcms-audits-check-page-link',
                             'data' => ['id' => $id, 'pageID' => $pageID, 'linkID' => $linkID]
                         ];
-                        //break; // TEMP
                     }
                 }
                 if (!empty($tasksData)) {
