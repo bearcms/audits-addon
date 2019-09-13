@@ -1,0 +1,17 @@
+{
+    "id": "bearcms/audits-addon",
+    "name": "Audits",
+    "description": "Run a series of checks to identify problems with your website (missing titles and descriptions, broken links, etc.). Check if your website is accessible by search engines.",
+    "author": {
+        "name": "Bear CMS",
+        "email": "support@bearcms.com",
+        "url": "https://bearcms.com/"
+    },
+    "media": [
+        {
+            "filename": "/assets/1.png",
+            "width": 1400,
+            "height": 1040
+        }
+    ]
+}

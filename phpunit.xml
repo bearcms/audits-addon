@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<phpunit bootstrap="tests/bootstrap.php"
+         colors="false"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         beStrictAboutOutputDuringTests="true"
+         stopOnFailure="true">
+    <testsuites>
+        <testsuite name="">
+            <directory>./tests/</directory>
+        </testsuite>
+    </testsuites>
+    <logging>
+        <log type="coverage-clover" target="coverage.xml"/>
+    </logging>
+    <filter>
+        <whitelist>
+            <directory>./classes/</directory>
+            <file>./index.php</file>
+        </whitelist>
+    </filter>
+</phpunit>
