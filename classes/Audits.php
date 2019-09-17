@@ -155,7 +155,7 @@ class Audits
         $data = Utilities::getData($id);
         if ($data !== null) {
             $result['dateRequested'] = $data['dateRequested'];
-            $result['maxPagesCount'] = $data['maxPagesCount'];
+            $result['maxPagesCount'] = isset($data['maxPagesCount']) ? $data['maxPagesCount'] : null;
             foreach ($data['pages'] as $pageID => $pageData) {
                 $pageLinksResult = null;
                 if (isset($pageData['links'])) {
