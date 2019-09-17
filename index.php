@@ -26,10 +26,13 @@ $app->shortcuts
 
 $app->bearCMS->addons
     ->register('bearcms/audits-addon', function (\BearCMS\Addons\Addon $addon) use ($app) {
-        $addon->initialize = function () use ($app) {
+        $addon->initialize = function (array $options = []) use ($app) {
             $context = $app->contexts->get(__FILE__);
 
             \BearCMS\Internal\Config::$appSpecificServerData['g9zmd3al'] = 1;
+            if (isset($options['maxPagesCount'])) {
+                \BearCMS\Internal\Config::$appSpecificServerData['akz3ajr3'] = (int) $options['maxPagesCount'];
+            }
 
             \BearCMS\Internal\ServerCommands::add('auditsGetList', function () use ($app) {
                 return $app->audits->getList()->toArray();
@@ -39,8 +42,9 @@ $app->bearCMS->addons
                 return $app->audits->delete($data['id']);
             });
 
-            \BearCMS\Internal\ServerCommands::add('auditsRequest', function () use ($app) {
-                return $app->audits->request();
+            \BearCMS\Internal\ServerCommands::add('auditsRequest', function (array $data) use ($app) {
+                $maxPagesCount = isset($data['maxPagesCount']) && is_numeric($data['maxPagesCount']) ? (int) $data['maxPagesCount'] : null;
+                return $app->audits->request($maxPagesCount);
             });
 
             \BearCMS\Internal\ServerCommands::add('auditsGetStatus', function (array $data) use ($app) {

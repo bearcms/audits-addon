@@ -52,6 +52,7 @@ class Utilities
             if (strlen($sitemapURL) > 0) {
                 $result = self::makeRequest($sitemapURL);
                 if ($result['status'] === 200) {
+                    $maxPagesCount = $data['maxPagesCount'];
                     $dom = new DOMDocument();
                     try {
                         $dom->loadXML($result['content']);
@@ -82,10 +83,19 @@ class Utilities
             $data['pages'][$pageID] = [
                 'url' => $url
             ];
-            $tasksData[] = [
-                'definitionID' => 'bearcms-audits-check-page',
-                'data' => ['id' => $id, 'pageID' => $pageID]
-            ];
+            $addTask = true;
+            if ($maxPagesCount !== null) {
+                if (sizeof($data['pages']) > $maxPagesCount) {
+                    $data['pages'][$pageID]['status'] = -1;
+                    $addTask = false;
+                }
+            }
+            if ($addTask) {
+                $tasksData[] = [
+                    'definitionID' => 'bearcms-audits-check-page',
+                    'data' => ['id' => $id, 'pageID' => $pageID]
+                ];
+            }
         }
         self::setData($id, $data);
         if (!empty($tasksData)) {

@@ -44,9 +44,10 @@ class Audits
     /**
      * Requests a new audits. The audit ID is returned.
      *
+     * @param integer $maxPagesCount The maximum number of pages to analyze
      * @return string The ID of the audit requested.
      */
-    public function request(): string
+    public function request(int $maxPagesCount = null): string
     {
         $id = md5(uniqid());
         $app = App::get();
@@ -57,6 +58,7 @@ class Audits
         $data['allowSearchEngines'] = null;
         $data['errors'] = [];
         $data['dateRequested'] = date('c');
+        $data['maxPagesCount'] = $maxPagesCount;
         Utilities::setData($id, $data);
         $app->tasks->add('bearcms-audits-initialize', $id);
         return $id;
@@ -101,8 +103,10 @@ class Audits
                     $pagePercent = 100 / $totalPages;
                     foreach ($data['pages'] as $pageData) {
                         $allLinksAreDone = false;
-                        if (isset($pageData['links'])) {
+                        if (isset($pageData['status'])) {
                             $allLinksAreDone = true;
+                        }
+                        if (isset($pageData['links'])) {
                             $totalPageLinks = sizeof($pageData['links']);
                             if ($totalPageLinks > 0) {
                                 $percent += $pagePercent / 2;
@@ -151,6 +155,7 @@ class Audits
         $data = Utilities::getData($id);
         if ($data !== null) {
             $result['dateRequested'] = $data['dateRequested'];
+            $result['maxPagesCount'] = $data['maxPagesCount'];
             foreach ($data['pages'] as $pageID => $pageData) {
                 $pageLinksResult = null;
                 if (isset($pageData['links'])) {
@@ -160,7 +165,7 @@ class Audits
                             'id' => $pageLinkID,
                             'url' => $pageLink['url'],
                             'status' => $pageLink['status'],
-                            'dateChecked' => $pageLink['dateChecked'],
+                            'dateChecked' => $pageLink['dateChecked']
                         ];
                     }
                 }
