@@ -76,6 +76,8 @@ class Utilities
             $data['errors'] = 'There is a problem with ' . $robotsURL . ' (status:' . $result['status'] . ')';
         }
 
+        $urls = array_unique($urls);
+
         $data['pages'] = [];
         $tasksData = [];
         foreach ($urls as $url) {
@@ -141,18 +143,26 @@ class Utilities
                 }
                 $tasksData = [];
                 $links = $dom->querySelectorAll('a');
+                $counter = 0;
                 foreach ($links as $link) {
                     $linkLocation = trim($link->getAttribute('href'));
                     if (strlen($linkLocation) > 0 && strpos($linkLocation, 'javascript:') !== 0 && strpos($linkLocation, 'mailto:') !== 0) {
-                        $linkID = md5($linkLocation);
+                        $counter++;
+                        $linkID = md5($linkLocation . '-' . $counter);
                         $pageData['links'][$linkID] = [
                             'url' => $linkLocation,
                             'status' => null
                         ];
-                        $tasksData[] = [
-                            'definitionID' => 'bearcms-audits-check-page-link',
-                            'data' => ['id' => $id, 'pageID' => $pageID, 'linkID' => $linkID]
-                        ];
+                        list($linkStatus, $linkDate) = self::getURLStatusFromCache($id, $linkLocation);
+                        if ($linkStatus !== null) {
+                            $pageData['links'][$linkID]['status'] = $linkStatus;
+                            $pageData['links'][$linkID]['dateChecked'] = $linkDate;
+                        } else {
+                            $tasksData[] = [
+                                'definitionID' => 'bearcms-audits-check-page-link',
+                                'data' => ['id' => $id, 'pageID' => $pageID, 'linkID' => $linkID]
+                            ];
+                        }
                     }
                 }
                 if (!empty($tasksData)) {
