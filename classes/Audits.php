@@ -176,6 +176,8 @@ class Audits
                     'dateChecked' => isset($pageData['dateChecked']) ? $pageData['dateChecked'] : null,
                     'title' => isset($pageData['title']) ? $pageData['title'] : null,
                     'description' => isset($pageData['description']) ? $pageData['description'] : null,
+                    'keywords' => isset($pageData['keywords']) ? $pageData['keywords'] : null,
+                    'content' => isset($pageData['content']) ? $pageData['content'] : null,
                     'links' => $pageLinksResult
                 ];
             }

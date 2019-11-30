@@ -127,7 +127,9 @@ class Utilities
             if ($result['status'] === 200) {
                 $pageData['title'] = null;
                 $pageData['description'] = null;
+                $pageData['keywords'] = null;
                 $pageData['links'] = [];
+                $pageData['content'] = null;
                 $dom = new HTML5DOMDocument();
                 $dom->loadHTML($result['content'], HTML5DOMDocument::ALLOW_DUPLICATE_IDS);
                 $headElement = $dom->querySelector('head');
@@ -140,6 +142,22 @@ class Utilities
                     if ($metaDescriptionElement !== null) {
                         $pageData['description'] = $metaDescriptionElement->getAttribute('content');
                     }
+                    $metaKeywordsElement = $headElement->querySelector('meta[name="keywords"]');
+                    if ($metaKeywordsElement !== null) {
+                        $pageData['keywords'] = $metaKeywordsElement->getAttribute('content');
+                    }
+                }
+                $bodyElement = $dom->querySelector('body');
+                if ($bodyElement !== null) {
+                    $scriptElements = $bodyElement->querySelectorAll('script');
+                    foreach ($scriptElements as $scriptElement) {
+                        $scriptElement->parentNode->removeChild($scriptElement);
+                    }
+                    $content = $bodyElement->innerHTML;
+                    $content = str_replace('&nbsp;', ' ', $content);
+                    $content = strip_tags($content);
+                    $content = htmlspecialchars_decode($content);
+                    $pageData['content'] = $content;
                 }
                 $tasksData = [];
                 $links = $dom->querySelectorAll('a');
