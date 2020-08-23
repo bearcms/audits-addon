@@ -229,7 +229,7 @@ class Utilities
             foreach ($data['p'] as $_pageID => $_pageData) {
                 if (isset($_pageData['l'])) {
                     foreach ($_pageData['l'] as $_linkID => $_linkData) {
-                        if ($linkData['u'] === $_linkData['u']) {
+                        if ($linkData['u'] === $_linkData['u'] && !isset($_linkData['s'])) {
                             $data['p'][$_pageID]['l'][$_linkID]['s'] = $status;
                             $data['p'][$_pageID]['l'][$_linkID]['d'] = $date;
                         }
