@@ -18,6 +18,12 @@ use IvoPetkov\HTML5DOMDocument;
  */
 class Utilities
 {
+
+    /**
+     * @var array
+     */
+    static $cache = [];
+
     /**
      * 
      * @param string $id
@@ -32,19 +38,19 @@ class Utilities
         }
 
         $urls = [];
-        $robotsURL = $data['url'] . 'robots.txt';
+        $robotsURL = $data['u'] . 'robots.txt';
         $result = self::makeRequest($robotsURL);
         if ($result['status'] === 200) {
             $robotsLines = explode("\n", $result['content']);
             $sitemapURL = null;
-            $data['allowSearchEngines'] = true;
+            $data['a'] = true;
             foreach ($robotsLines as $robotsLine) {
                 $robotsLine = strtolower(trim($robotsLine));
                 if (strlen($robotsLine) === 0) {
                     continue;
                 }
-                if (strpos($robotsLine, 'Disallow:') === 0) {
-                    $data['allowSearchEngines'] = (int) ($robotsLine === 'Disallow:');
+                if (strpos($robotsLine, 'disallow:') === 0) {
+                    $data['a'] = (int) ($robotsLine === 'disallow:');
                 } elseif (strpos($robotsLine, 'sitemap:') === 0) {
                     $sitemapURL = trim(substr($robotsLine, 8));
                 }
@@ -52,7 +58,7 @@ class Utilities
             if (strlen($sitemapURL) > 0) {
                 $result = self::makeRequest($sitemapURL);
                 if ($result['status'] === 200) {
-                    $maxPagesCount = $data['maxPagesCount'];
+                    $maxPagesCount = $data['m'];
                     $dom = new DOMDocument();
                     try {
                         $dom->loadXML($result['content']);
@@ -63,32 +69,32 @@ class Utilities
                                 $urls[] = $locationElements->item(0)->nodeValue;
                             }
                         }
-                    } catch (Exception $e) {
-                        $data['errors'] = 'Error finding URLs in ' . $sitemapURL;
+                    } catch (\Exception $e) {
+                        $data['e'] = 'Error finding URLs in ' . $sitemapURL;
                     }
                 } else {
-                    $data['errors'] = 'There is a problem with ' . $sitemapURL . ' (status:' . $result['status'] . ')';
+                    $data['e'] = 'There is a problem with ' . $sitemapURL . ' (status:' . $result['status'] . ')';
                 }
             } else {
-                $data['errors'] = 'Cannot find sitemap URL in ' . $robotsURL;
+                $data['e'] = 'Cannot find sitemap URL in ' . $robotsURL;
             }
         } else {
-            $data['errors'] = 'There is a problem with ' . $robotsURL . ' (status:' . $result['status'] . ')';
+            $data['e'] = 'There is a problem with ' . $robotsURL . ' (status:' . $result['status'] . ')';
         }
 
         $urls = array_unique($urls);
 
-        $data['pages'] = [];
+        $data['p'] = [];
         $tasksData = [];
         foreach ($urls as $url) {
             $pageID = md5($url);
-            $data['pages'][$pageID] = [
-                'url' => $url
+            $data['p'][$pageID] = [
+                'u' => self::getShortURL($data['u'], $url)
             ];
             $addTask = true;
             if ($maxPagesCount !== null) {
-                if (sizeof($data['pages']) > $maxPagesCount) {
-                    $data['pages'][$pageID]['status'] = -1;
+                if (sizeof($data['p']) > $maxPagesCount) {
+                    $data['p'][$pageID]['s'] = -1;
                     $addTask = false;
                 }
             }
@@ -118,33 +124,34 @@ class Utilities
         if ($data === null) {
             return;
         }
-        if (isset($data['pages'][$pageID])) {
-            $pageData = $data['pages'][$pageID];
-            $result = self::makeRequest($pageData['url']);
-            $pageData['status'] = $result['status'];
-            $pageData['dateChecked'] = date('c');
-            self::setURLStatusInCache($id, $pageData['url'], $result['status'], $pageData['dateChecked']);
+        if (isset($data['p'][$pageID])) {
+            $pageData = $data['p'][$pageID];
+            $fullPageURL = self::getFullURL($data['u'], $pageData['u']);
+            $result = self::makeRequest($fullPageURL);
+            $pageData['s'] = $result['status'];
+            $pageData['d'] = date('c');
+            self::setURLStatusInCache($id, $fullPageURL, $result['status'], $pageData['d']);
             if ($result['status'] === 200) {
-                $pageData['title'] = null;
-                $pageData['description'] = null;
-                $pageData['keywords'] = null;
-                $pageData['links'] = [];
-                $pageData['content'] = null;
+                $pageData['t'] = null;
+                $pageData['e'] = null;
+                $pageData['k'] = null;
+                $pageData['l'] = [];
+                $pageData['c'] = null;
                 $dom = new HTML5DOMDocument();
                 $dom->loadHTML($result['content'], HTML5DOMDocument::ALLOW_DUPLICATE_IDS);
                 $headElement = $dom->querySelector('head');
                 if ($headElement !== null) {
                     $titleElement = $headElement->querySelector('title');
                     if ($titleElement !== null) {
-                        $pageData['title'] = $titleElement->innerHTML;
+                        $pageData['t'] = $titleElement->innerHTML;
                     }
                     $metaDescriptionElement = $headElement->querySelector('meta[name="description"]');
                     if ($metaDescriptionElement !== null) {
-                        $pageData['description'] = $metaDescriptionElement->getAttribute('content');
+                        $pageData['e'] = $metaDescriptionElement->getAttribute('content');
                     }
                     $metaKeywordsElement = $headElement->querySelector('meta[name="keywords"]');
                     if ($metaKeywordsElement !== null) {
-                        $pageData['keywords'] = $metaKeywordsElement->getAttribute('content');
+                        $pageData['k'] = $metaKeywordsElement->getAttribute('content');
                     }
                 }
                 $bodyElement = $dom->querySelector('body');
@@ -157,7 +164,7 @@ class Utilities
                     $content = str_replace('&nbsp;', ' ', $content);
                     $content = strip_tags($content);
                     $content = htmlspecialchars_decode($content);
-                    $pageData['content'] = $content;
+                    $pageData['c'] = $content;
                 }
                 $tasksData = [];
                 $links = $dom->querySelectorAll('a');
@@ -167,14 +174,14 @@ class Utilities
                     if (strlen($linkLocation) > 0 && strpos($linkLocation, 'javascript:') !== 0 && strpos($linkLocation, 'mailto:') !== 0) {
                         $counter++;
                         $linkID = md5($linkLocation . '-' . $counter);
-                        $pageData['links'][$linkID] = [
-                            'url' => $linkLocation,
-                            'status' => null
+                        $pageData['l'][$linkID] = [
+                            'u' => self::getShortURL($data['u'], $linkLocation),
+                            's' => null
                         ];
                         list($linkStatus, $linkDate) = self::getURLStatusFromCache($id, $linkLocation);
                         if ($linkStatus !== null) {
-                            $pageData['links'][$linkID]['status'] = $linkStatus;
-                            $pageData['links'][$linkID]['dateChecked'] = $linkDate;
+                            $pageData['l'][$linkID]['s'] = $linkStatus;
+                            $pageData['l'][$linkID]['d'] = $linkDate;
                         } else {
                             $tasksData[] = [
                                 'definitionID' => 'bearcms-audits-check-page-link',
@@ -187,7 +194,7 @@ class Utilities
                     $app->tasks->addMultiple($tasksData);
                 }
             }
-            $data['pages'][$pageID] = $pageData;
+            $data['p'][$pageID] = $pageData;
             self::setData($id, $data);
         }
     }
@@ -205,18 +212,19 @@ class Utilities
         if ($data === null) {
             return;
         }
-        if (isset($data['pages'][$pageID], $data['pages'][$pageID]['links'][$linkID])) {
-            $linkData = $data['pages'][$pageID]['links'][$linkID];
-            list($status, $date) = self::getURLStatusFromCache($id, $linkData['url']);
+        if (isset($data['p'][$pageID], $data['p'][$pageID]['l'][$linkID])) {
+            $linkData = $data['p'][$pageID]['l'][$linkID];
+            $fullPageLinkURL = self::getFullURL($data['u'], $linkData['u']);
+            list($status, $date) = self::getURLStatusFromCache($id, $fullPageLinkURL);
             if ($status === null) {
                 $date = date('c');
-                $result = self::makeRequest($linkData['url'], false);
+                $result = self::makeRequest($fullPageLinkURL, false);
                 $status = $result['status'];
-                self::setURLStatusInCache($id, $linkData['url'], $status, $date);
+                self::setURLStatusInCache($id, $fullPageLinkURL, $status, $date);
             }
-            $linkData['status'] = $status;
-            $linkData['dateChecked'] = $date;
-            $data['pages'][$pageID]['links'][$linkID] = $linkData;
+            $linkData['s'] = $status;
+            $linkData['d'] = $date;
+            $data['p'][$pageID]['l'][$linkID] = $linkData;
             self::setData($id, $data);
         }
     }
@@ -228,12 +236,87 @@ class Utilities
      */
     static function getData(string $id): ?array
     {
+        if (isset(self::$cache[$id])) {
+            return self::$cache[$id];
+        }
         $app = App::get();
         $value = $app->data->getValue(self::getDataKey($id));
         if ($value !== null) {
-            return json_decode($value, true);
+            $result = json_decode($value, true);
+            // Convert to v2 of the data format
+            if (is_array($result) && isset($result['id'])) {
+                $newResult = [];
+                if (isset($result['id'])) {
+                    $newResult['i'] = $result['id'];
+                }
+                if (isset($result['url'])) {
+                    $newResult['u'] = $result['url'];
+                }
+                if (isset($result['dateRequested'])) {
+                    $newResult['d'] = $result['dateRequested'];
+                }
+                if (isset($result['errors'])) {
+                    $newResult['e'] = $result['errors'];
+                }
+                if (isset($result['pages'])) {
+                    $pages = $result['pages'];
+                    $newPages = [];
+                    foreach ($pages as $pageID => $pageData) {
+                        $newPages[$pageID] = [];
+                        if (isset($pageData['status'])) {
+                            $newPages[$pageID]['s'] = $pageData['status'];
+                        }
+                        if (isset($pageData['links'])) {
+                            $links = $pageData['links'];
+                            $newLinks = [];
+                            foreach ($links as $linkID => $linkData) {
+                                $newLinks[$linkID] = [];
+                                if (isset($linkData['status'])) {
+                                    $newLinks[$linkID]['s'] = $linkData['status'];
+                                }
+                                if (isset($linkData['url'])) {
+                                    $newLinks[$linkID]['u'] = $linkData['url'];
+                                }
+                                if (isset($linkData['dateChecked'])) {
+                                    $newLinks[$linkID]['d'] = $linkData['dateChecked'];
+                                }
+                            }
+                            $newPages[$pageID]['l'] = $newLinks;
+                        }
+                        if (isset($pageData['url'])) {
+                            $newPages[$pageID]['u'] = $pageData['url'];
+                        }
+                        if (isset($pageData['dateChecked'])) {
+                            $newPages[$pageID]['d'] = $pageData['dateChecked'];
+                        }
+                        if (isset($pageData['title'])) {
+                            $newPages[$pageID]['t'] = $pageData['title'];
+                        }
+                        if (isset($pageData['description'])) {
+                            $newPages[$pageID]['e'] = $pageData['description'];
+                        }
+                        if (isset($pageData['keywords'])) {
+                            $newPages[$pageID]['k'] = $pageData['keywords'];
+                        }
+                        if (isset($pageData['content'])) {
+                            $newPages[$pageID]['c'] = $pageData['content'];
+                        }
+                    }
+                    $newResult['p'] = $newPages;
+                }
+                if (isset($result['maxPagesCount'])) {
+                    $newResult['m'] = $result['maxPagesCount'];
+                }
+                if (isset($result['allowSearchEngines'])) {
+                    $newResult['a'] = $result['allowSearchEngines'];
+                }
+                $result = $newResult;
+            }
+        } else {
+            $result = null;
         }
-        return null;
+        self::$cache[$id] = $result;
+        return $result;
     }
 
     /**
@@ -246,6 +329,7 @@ class Utilities
     {
         $app = App::get();
         $app->data->setValue(self::getDataKey($id), json_encode($data));
+        self::$cache[$id] = $data;
     }
 
     /**
@@ -257,6 +341,9 @@ class Utilities
     {
         $app = App::get();
         $app->data->delete(self::getDataKey($id));
+        if (isset(self::$cache[$id])) {
+            unset(self::$cache[$id]);
+        }
     }
 
     /**
@@ -288,8 +375,8 @@ class Utilities
         if (!$returnContent) {
             curl_setopt($ch, CURLOPT_NOBODY, true);
         }
-        //    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        //    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        // curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
         $content = curl_exec($ch);
         $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
@@ -335,5 +422,33 @@ class Utilities
     static function getURLStatusCacheKey(string $id, string $url): string
     {
         return 'bearcms-audits-' . md5($id) . '-' . md5($url);
+    }
+
+    /**
+     * 
+     * @param string $baseURL
+     * @param string $fullURL
+     * @return string
+     */
+    static function getShortURL(string $baseURL, string $fullURL): string
+    {
+        if (strpos($fullURL, $baseURL) === 0) {
+            return '*' . substr($fullURL, strlen($baseURL));
+        }
+        return $fullURL;
+    }
+
+    /**
+     *
+     * @param string $baseURL
+     * @param string $shortURL
+     * @return string
+     */
+    static function getFullURL(string $baseURL, string $shortURL): string
+    {
+        if (substr($shortURL, 0, 1) === '*') {
+            return $baseURL . substr($shortURL, 1);
+        }
+        return $shortURL;
     }
 }

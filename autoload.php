@@ -7,4 +7,9 @@
  * Free to use under the MIT license.
  */
 
-BearFramework\Addons::register('bearcms/audits-addon', __DIR__);
+BearFramework\Addons::register('bearcms/audits-addon', __DIR__, [
+    'require' => [
+        'bearcms/bearframework-addon',
+        'bearframework/tasks-addon'
+    ]
+]);

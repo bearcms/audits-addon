@@ -31,10 +31,17 @@ class Audits
             foreach ($list as $item) {
                 $data = json_decode($item->value, true);
                 if (is_array($data)) {
-                    $result[] = [
-                        'id' => $data['id'],
-                        'dateRequested' => $data['dateRequested'],
-                    ];
+                    if (isset($data['id'])) { // v1 format
+                        $result[] = [
+                            'id' => $data['id'],
+                            'dateRequested' => $data['dateRequested'],
+                        ];
+                    } else {
+                        $result[] = [
+                            'id' => $data['i'],
+                            'dateRequested' => $data['d'],
+                        ];
+                    }
                 }
             }
             return $result;
@@ -52,13 +59,13 @@ class Audits
         $id = md5(uniqid());
         $app = App::get();
         $data = [];
-        $data['id'] = $id;
-        $data['url'] = $app->urls->get('/');
-        $data['pages'] = null;
-        $data['allowSearchEngines'] = null;
-        $data['errors'] = [];
-        $data['dateRequested'] = date('c');
-        $data['maxPagesCount'] = $maxPagesCount;
+        $data['i'] = $id;
+        $data['u'] = $app->urls->get('/');
+        $data['p'] = null;
+        $data['a'] = null;
+        $data['e'] = [];
+        $data['d'] = date('c');
+        $data['m'] = $maxPagesCount;
         Utilities::setData($id, $data);
         $app->tasks->add('bearcms-audits-initialize', $id);
         return $id;
@@ -89,30 +96,30 @@ class Audits
         if ($data === null) {
             $result['status'] = 'NOTFOUND';
         } else {
-            $result['dateRequested'] = $data['dateRequested'];
-            if (!empty($data['errors'])) {
+            $result['dateRequested'] = $data['d'];
+            if (!empty($data['e'])) {
                 $result['status'] = 'ERRORS';
-                $result['errors'] = $data['errors'];
+                $result['errors'] = $data['e'];
             } else {
                 $percent = 0;
-                if ($data['pages'] === null) {
+                if ($data['p'] === null) {
                     $allPagesAreDone = false;
                 } else {
                     $allPagesAreDone = true;
-                    $totalPages = sizeof($data['pages']);
+                    $totalPages = sizeof($data['p']);
                     $pagePercent = 100 / $totalPages;
-                    foreach ($data['pages'] as $pageData) {
+                    foreach ($data['p'] as $pageData) {
                         $allLinksAreDone = false;
-                        if (isset($pageData['status'])) {
+                        if (isset($pageData['s'])) {
                             $allLinksAreDone = true;
                         }
-                        if (isset($pageData['links'])) {
-                            $totalPageLinks = sizeof($pageData['links']);
+                        if (isset($pageData['l'])) {
+                            $totalPageLinks = sizeof($pageData['l']);
                             if ($totalPageLinks > 0) {
                                 $percent += $pagePercent / 2;
                                 $pageLinkPercent = ($pagePercent / 2) / $totalPageLinks;
-                                foreach ($pageData['links'] as $linkData) {
-                                    if (isset($linkData['status'])) {
+                                foreach ($pageData['l'] as $linkData) {
+                                    if (isset($linkData['s'])) {
                                         $percent += $pageLinkPercent;
                                     } else {
                                         $allLinksAreDone = false;
@@ -154,34 +161,34 @@ class Audits
         ];
         $data = Utilities::getData($id);
         if ($data !== null) {
-            $result['dateRequested'] = $data['dateRequested'];
-            $result['maxPagesCount'] = isset($data['maxPagesCount']) ? $data['maxPagesCount'] : null;
-            foreach ($data['pages'] as $pageID => $pageData) {
+            $result['dateRequested'] = $data['d'];
+            $result['maxPagesCount'] = isset($data['m']) ? $data['m'] : null;
+            foreach ($data['p'] as $pageID => $pageData) {
                 $pageLinksResult = null;
-                if (isset($pageData['links'])) {
+                if (isset($pageData['l'])) {
                     $pageLinksResult = [];
-                    foreach ($pageData['links'] as $pageLinkID => $pageLink) {
+                    foreach ($pageData['l'] as $pageLinkID => $pageLink) {
                         $pageLinksResult[] = [
                             'id' => $pageLinkID,
-                            'url' => $pageLink['url'],
-                            'status' => $pageLink['status'],
-                            'dateChecked' => $pageLink['dateChecked']
+                            'url' => Utilities::getFullURL($data['u'], $pageLink['u']),
+                            'status' => $pageLink['s'],
+                            'dateChecked' => $pageLink['d']
                         ];
                     }
                 }
                 $result['pages'][] = [
                     'id' => $pageID,
-                    'url' => $pageData['url'],
-                    'status' => isset($pageData['status']) ? $pageData['status'] : null,
-                    'dateChecked' => isset($pageData['dateChecked']) ? $pageData['dateChecked'] : null,
-                    'title' => isset($pageData['title']) ? $pageData['title'] : null,
-                    'description' => isset($pageData['description']) ? $pageData['description'] : null,
-                    'keywords' => isset($pageData['keywords']) ? $pageData['keywords'] : null,
-                    'content' => isset($pageData['content']) ? $pageData['content'] : null,
+                    'url' => Utilities::getFullURL($data['u'], $pageData['u']),
+                    'status' => isset($pageData['s']) ? $pageData['s'] : null,
+                    'dateChecked' => isset($pageData['d']) ? $pageData['d'] : null,
+                    'title' => isset($pageData['t']) ? $pageData['t'] : null,
+                    'description' => isset($pageData['e']) ? $pageData['e'] : null,
+                    'keywords' => isset($pageData['k']) ? $pageData['k'] : null,
+                    'content' => isset($pageData['c']) ? $pageData['c'] : null,
                     'links' => $pageLinksResult
                 ];
             }
-            $result['allowSearchEngines'] = $data['allowSearchEngines'];
+            $result['allowSearchEngines'] = $data['a'];
         }
         return $result;
     }
