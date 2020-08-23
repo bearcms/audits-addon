@@ -62,8 +62,11 @@ $app->bearCMS->addons
                 ->define('bearcms-audits-check-page', function (array $data) {
                     Utilities::checkPage($data['id'], $data['pageID']);
                 })
-                ->define('bearcms-audits-check-page-link', function (array $data) {
+                ->define('bearcms-audits-check-page-link', function (array $data) { // v1
                     Utilities::checkPageLink($data['id'], $data['pageID'], $data['linkID']);
+                })
+                ->define('bearcms-audits-check-link', function (array $data) {
+                    Utilities::checkLink($data['id'], $data['url']);
                 });
         };
     });

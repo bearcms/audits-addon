@@ -168,7 +168,7 @@ class Utilities
                     $content = htmlspecialchars_decode($content);
                     $pageData['c'] = $content;
                 }
-                $tasksData = [];
+                //$tasksData = [];
                 $links = $dom->querySelectorAll('a');
                 $counter = 0;
                 foreach ($links as $link) {
@@ -176,8 +176,9 @@ class Utilities
                     if (strlen($linkLocation) > 0 && strpos($linkLocation, 'javascript:') !== 0 && strpos($linkLocation, 'mailto:') !== 0) {
                         $counter++;
                         $linkID = md5($linkLocation . '-' . $counter);
+                        $shortURL = self::getShortURL($data['u'], $linkLocation);
                         $pageData['l'][$linkID] = [
-                            'u' => self::getShortURL($data['u'], $linkLocation),
+                            'u' => $shortURL,
                             's' => null
                         ];
                         list($linkStatus, $linkDate) = self::getURLStatusFromCache($id, $linkLocation);
@@ -185,16 +186,21 @@ class Utilities
                             $pageData['l'][$linkID]['s'] = $linkStatus;
                             $pageData['l'][$linkID]['d'] = $linkDate;
                         } else {
-                            $tasksData[] = [
-                                'definitionID' => 'bearcms-audits-check-page-link',
-                                'data' => ['id' => $id, 'pageID' => $pageID, 'linkID' => $linkID]
-                            ];
+                            // v1
+                            // $tasksData[] = [
+                            //     'definitionID' => 'bearcms-audits-check-page-link',
+                            //     'data' => ['id' => $id, 'pageID' => $pageID, 'linkID' => $linkID]
+                            // ];
+                            $app->tasks->add('bearcms-audits-check-link', ['id' => $id, 'url' => $shortURL], [
+                                'id' => 'bearcms-audits-check-link-' . $id . '-' . md5($shortURL),
+                                'ignoreIfExists' => true
+                            ]);
                         }
                     }
                 }
-                if (!empty($tasksData)) {
-                    $app->tasks->addMultiple($tasksData);
-                }
+                // if (!empty($tasksData)) {
+                //     $app->tasks->addMultiple($tasksData);
+                // }
             }
             $data['p'][$pageID] = $pageData;
             self::setData($id, $data);
@@ -219,27 +225,56 @@ class Utilities
             if (isset($linkData['s'])) { // Already set by other task
                 return;
             }
-            $fullPageLinkURL = self::getFullURL($data['u'], $linkData['u']);
-            list($status, $date) = self::getURLStatusFromCache($id, $fullPageLinkURL);
-            if ($status === null) {
-                $date = date('c');
-                $result = self::makeRequest($fullPageLinkURL, false);
-                $status = $result['status'];
-                self::setURLStatusInCache($id, $fullPageLinkURL, $status, $date);
-            }
-            // Update all pages that have the same links
-            foreach ($data['p'] as $_pageID => $_pageData) {
-                if (isset($_pageData['l'])) {
-                    foreach ($_pageData['l'] as $_linkID => $_linkData) {
-                        if ($linkData['u'] === $_linkData['u'] && !isset($_linkData['s'])) {
-                            $data['p'][$_pageID]['l'][$_linkID]['s'] = $status;
-                            $data['p'][$_pageID]['l'][$_linkID]['d'] = $date;
-                        }
+            $data = self::updateLinkData($id, $data, $linkData['u']);
+            self::setData($id, $data);
+        }
+    }
+
+    /**
+     * 
+     * @param string $id
+     * @param string $url
+     * @return void
+     */
+    static function checkLink(string $id, string $url): void
+    {
+        $data = self::getData($id);
+        if ($data === null) {
+            return;
+        }
+        $data = self::updateLinkData($id, $data, $url);
+        self::setData($id, $data);
+    }
+
+    /**
+     * 
+     * @param string $id
+     * @param array $data
+     * @param string $url
+     * @return array
+     */
+    static private function updateLinkData(string $id, array $data, string $url): array
+    {
+        $fullPageLinkURL = self::getFullURL($data['u'], $url);
+        list($status, $date) = self::getURLStatusFromCache($id, $fullPageLinkURL);
+        if ($status === null) {
+            $date = date('c');
+            $result = self::makeRequest($fullPageLinkURL, false);
+            $status = $result['status'];
+            self::setURLStatusInCache($id, $fullPageLinkURL, $status, $date);
+        }
+        // Update all pages that have the same links
+        foreach ($data['p'] as $_pageID => $_pageData) {
+            if (isset($_pageData['l'])) {
+                foreach ($_pageData['l'] as $_linkID => $_linkData) {
+                    if ($url === $_linkData['u'] && !isset($_linkData['s'])) {
+                        $data['p'][$_pageID]['l'][$_linkID]['s'] = $status;
+                        $data['p'][$_pageID]['l'][$_linkID]['d'] = $date;
                     }
                 }
             }
-            self::setData($id, $data);
         }
+        return $data;
     }
 
     /**
