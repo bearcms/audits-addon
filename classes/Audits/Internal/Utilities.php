@@ -214,6 +214,9 @@ class Utilities
         }
         if (isset($data['p'][$pageID], $data['p'][$pageID]['l'][$linkID])) {
             $linkData = $data['p'][$pageID]['l'][$linkID];
+            if (isset($linkData['s'])) { // Already set by other task
+                return;
+            }
             $fullPageLinkURL = self::getFullURL($data['u'], $linkData['u']);
             list($status, $date) = self::getURLStatusFromCache($id, $fullPageLinkURL);
             if ($status === null) {
@@ -222,9 +225,17 @@ class Utilities
                 $status = $result['status'];
                 self::setURLStatusInCache($id, $fullPageLinkURL, $status, $date);
             }
-            $linkData['s'] = $status;
-            $linkData['d'] = $date;
-            $data['p'][$pageID]['l'][$linkID] = $linkData;
+            // Update all pages that have the same links
+            foreach ($data['p'] as $_pageID => $_pageData) {
+                if (isset($_pageData['l'])) {
+                    foreach ($_pageData['l'] as $_linkID => $_linkData) {
+                        if ($linkData['u'] === $_linkData['u']) {
+                            $data['p'][$_pageID]['l'][$_linkID]['s'] = $status;
+                            $data['p'][$_pageID]['l'][$_linkID]['d'] = $date;
+                        }
+                    }
+                }
+            }
             self::setData($id, $data);
         }
     }
