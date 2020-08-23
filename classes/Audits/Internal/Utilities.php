@@ -84,6 +84,7 @@ class Utilities
 
         $urls = array_unique($urls);
 
+        $currentTime = time();
         $data['p'] = [];
         $tasksData = [];
         foreach ($urls as $url) {
@@ -101,7 +102,8 @@ class Utilities
             if ($addTask) {
                 $tasksData[] = [
                     'definitionID' => 'bearcms-audits-check-page',
-                    'data' => ['id' => $id, 'pageID' => $pageID]
+                    'data' => ['id' => $id, 'pageID' => $pageID],
+                    'options' => ['startTime' => $currentTime] // This forces the pages tasks to be executed before the link tasks
                 ];
             }
         }
