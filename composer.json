@@ -18,13 +18,12 @@
     "require": {
         "php": ">=7.1.0",
         "bearframework/bearframework": "1.*",
-        "bearframework/tasks-addon": "0.4.*",
+        "bearframework/tasks-addon": "1.*",
         "bearcms/bearframework-addon": "1.*",
         "ivopetkov/html5-dom-document-php": "2.*"
     },
     "require-dev": {
-        "bearframework/addon-tests": "0.3.*",
-        "phpunit/phpunit": "7.*"
+        "bearframework/addon-tests": "1.*"
     },
     "autoload": {
         "files": [
