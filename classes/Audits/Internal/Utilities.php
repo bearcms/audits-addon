@@ -38,6 +38,32 @@ class Utilities
         }
 
         $urls = [];
+
+        $processSitemapURL = function ($sitemapURL) use (&$data, &$urls) {
+            $result = self::makeRequest($sitemapURL);
+            if ($result['status'] === 200) {
+                $dom = new DOMDocument();
+                try {
+                    $dom->loadXML($result['content']);
+                    $elements = $dom->getElementsByTagName('url');
+                    foreach ($elements as $element) {
+                        $locationElements = $element->getElementsByTagName('loc');
+                        if ($locationElements->length === 1) {
+                            $urls[] = $locationElements->item(0)->nodeValue;
+                        }
+                    }
+                    return true;
+                } catch (\Exception $e) {
+                    $data['e'] = 'Error finding URLs in ' . $sitemapURL;
+                }
+            } else {
+                $data['e'] = 'There is a problem with ' . $sitemapURL . ' (status:' . $result['status'] . ')';
+            }
+            return false;
+        };
+
+        $maxPagesCount = $data['m'];
+
         $robotsURL = $data['u'] . 'robots.txt';
         $result = self::makeRequest($robotsURL);
         if ($result['status'] === 200) {
@@ -49,34 +75,16 @@ class Utilities
                 if (strlen($robotsLine) === 0) {
                     continue;
                 }
-                if (strpos($robotsLine, 'disallow:') === 0) {
-                    $data['a'] = (int) ($robotsLine === 'disallow:');
+                if (str_replace(' ', '', $robotsLine) === 'disallow:/') {
+                    $data['a'] = false;
                 } elseif (strpos($robotsLine, 'sitemap:') === 0) {
                     $sitemapURL = trim(substr($robotsLine, 8));
                 }
             }
             if (strlen($sitemapURL) > 0) {
-                $result = self::makeRequest($sitemapURL);
-                if ($result['status'] === 200) {
-                    $maxPagesCount = $data['m'];
-                    $dom = new DOMDocument();
-                    try {
-                        $dom->loadXML($result['content']);
-                        $elements = $dom->getElementsByTagName('url');
-                        foreach ($elements as $element) {
-                            $locationElements = $element->getElementsByTagName('loc');
-                            if ($locationElements->length === 1) {
-                                $urls[] = $locationElements->item(0)->nodeValue;
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        $data['e'] = 'Error finding URLs in ' . $sitemapURL;
-                    }
-                } else {
-                    $data['e'] = 'There is a problem with ' . $sitemapURL . ' (status:' . $result['status'] . ')';
-                }
+                $processSitemapURL($sitemapURL);
             } else {
-                $data['e'] = 'Cannot find sitemap URL in ' . $robotsURL;
+                $processSitemapURL($data['u'] . 'sitemap.xml');
             }
         } else {
             $data['e'] = 'There is a problem with ' . $robotsURL . ' (status:' . $result['status'] . ')';
