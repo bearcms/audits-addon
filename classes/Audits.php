@@ -107,7 +107,7 @@ class Audits
                 } else {
                     $allPagesAreDone = true;
                     $totalPages = sizeof($data['p']);
-                    $pagePercent = 100 / $totalPages;
+                    $pagePercent = $totalPages > 0 ? 100 / $totalPages : 100;
                     foreach ($data['p'] as $pageData) {
                         $allLinksAreDone = false;
                         if (isset($pageData['s'])) {
