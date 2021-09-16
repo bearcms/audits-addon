@@ -181,7 +181,7 @@ class Utilities
                 $counter = 0;
                 foreach ($links as $link) {
                     $linkLocation = trim($link->getAttribute('href'));
-                    if (strlen($linkLocation) > 0 && strpos($linkLocation, 'javascript:') !== 0 && strpos($linkLocation, 'mailto:') !== 0) {
+                    if (strlen($linkLocation) > 0 && strpos($linkLocation, 'javascript:') !== 0 && strpos($linkLocation, 'mailto:') !== 0 && strpos($linkLocation, '#') !== 0) {
                         $counter++;
                         $linkID = md5($linkLocation . '-' . $counter);
                         $shortURL = self::getShortURL($data['u'], $linkLocation);
