@@ -27,7 +27,6 @@ $app->shortcuts
 $app->bearCMS->addons
     ->register('bearcms/audits-addon', function (\BearCMS\Addons\Addon $addon) use ($app) {
         $addon->initialize = function (array $options = []) use ($app) {
-            $context = $app->contexts->get(__DIR__);
 
             \BearCMS\Internal\Config::$appSpecificServerData['g9zmd3al'] = 1;
             if (isset($options['maxPagesCount'])) {
