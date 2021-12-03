@@ -13,14 +13,14 @@
 class AuditsTest extends BearFramework\AddonTests\PHPUnitTestCase
 {
 
-    protected function initializeApp(bool $setLogger = true, bool $setDataDriver = true, bool $setCacheDriver = true, bool $addAddon = true): \BearFramework\App
-    {
-        $app = parent::initializeApp($setLogger, $setDataDriver, $setCacheDriver, false);
-        $app->addons->add('bearcms/bearframework-addon');
-        $app->bearCMS->initialize([]);
-        $app->bearCMS->addons->add('bearcms/audits-addon');
-        return $app;
-    }
+    // protected function initializeApp(bool $setLogger = true, bool $setDataDriver = true, bool $setCacheDriver = true, bool $addAddon = true): \BearFramework\App
+    // {
+    //     $app = parent::initializeApp($setLogger, $setDataDriver, $setCacheDriver, false);
+    //     $app->addons->add('bearcms/bearframework-addon');
+    //     $app->bearCMS->initialize([]);
+    //     $app->bearCMS->addons->add('bearcms/audits-addon');
+    //     return $app;
+    // }
 
     /**
      *
