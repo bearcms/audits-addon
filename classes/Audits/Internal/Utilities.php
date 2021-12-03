@@ -68,7 +68,7 @@ class Utilities
         $result = self::makeRequest($robotsURL);
         if ($result['status'] === 200) {
             $robotsLines = explode("\n", $result['content']);
-            $sitemapURL = null;
+            $sitemapURL = '';
             $data['a'] = true;
             foreach ($robotsLines as $robotsLine) {
                 $robotsLine = strtolower(trim($robotsLine));
@@ -180,7 +180,7 @@ class Utilities
                 $links = $dom->querySelectorAll('a');
                 $counter = 0;
                 foreach ($links as $link) {
-                    $linkLocation = trim($link->getAttribute('href'));
+                    $linkLocation = trim((string)$link->getAttribute('href'));
                     if (strlen($linkLocation) > 0 && strpos($linkLocation, 'javascript:') !== 0 && strpos($linkLocation, 'mailto:') !== 0 && strpos($linkLocation, '#') !== 0) {
                         $counter++;
                         $linkID = md5($linkLocation . '-' . $counter);
