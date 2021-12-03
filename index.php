@@ -19,14 +19,14 @@ $context->classes
     ->add('BearCMS\Audits', 'classes/Audits.php')
     ->add('BearCMS\Audits\Internal\Utilities', 'classes/Audits/Internal/Utilities.php');
 
-$app->shortcuts
-    ->add('audits', function () {
-        return new Audits();
-    });
-
 $app->bearCMS->addons
     ->register('bearcms/audits-addon', function (\BearCMS\Addons\Addon $addon) use ($app) {
         $addon->initialize = function (array $options = []) use ($app) {
+
+            $app->shortcuts
+                ->add('audits', function () {
+                    return new Audits();
+                });
 
             \BearCMS\Internal\Config::$appSpecificServerData['g9zmd3al'] = 1;
             if (isset($options['maxPagesCount'])) {
