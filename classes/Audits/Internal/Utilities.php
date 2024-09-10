@@ -65,7 +65,10 @@ class Utilities
         $maxPagesCount = $data['m'];
 
         $robotsURL = $data['u'] . 'robots.txt';
+        $robotsURL = 'https://example.alle.bg/robots.txt';
         $result = self::makeRequest($robotsURL);
+        // print_r($result);
+        // exit;
         if ($result['status'] === 200) {
             $robotsLines = explode("\n", $result['content']);
             $sitemapURL = '';
@@ -181,7 +184,7 @@ class Utilities
                 $counter = 0;
                 foreach ($links as $link) {
                     $linkLocation = trim((string)$link->getAttribute('href'));
-                    if (strlen($linkLocation) > 0 && strpos($linkLocation, 'javascript:') !== 0 && strpos($linkLocation, 'mailto:') !== 0 && strpos($linkLocation, '#') !== 0) {
+                    if (strlen($linkLocation) > 0 && strpos($linkLocation, 'javascript:') !== 0 && strpos($linkLocation, 'mailto:') !== 0 && strpos($linkLocation, 'tel:') !== 0 && strpos($linkLocation, 'viber:') !== 0 && strpos($linkLocation, '#') !== 0) {
                         $counter++;
                         $linkID = md5($linkLocation . '-' . $counter);
                         $shortURL = self::getShortURL($data['u'], $linkLocation);
