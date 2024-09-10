@@ -65,10 +65,7 @@ class Utilities
         $maxPagesCount = $data['m'];
 
         $robotsURL = $data['u'] . 'robots.txt';
-        $robotsURL = 'https://example.alle.bg/robots.txt';
         $result = self::makeRequest($robotsURL);
-        // print_r($result);
-        // exit;
         if ($result['status'] === 200) {
             $robotsLines = explode("\n", $result['content']);
             $sitemapURL = '';
