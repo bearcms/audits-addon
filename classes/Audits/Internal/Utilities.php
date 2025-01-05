@@ -102,7 +102,7 @@ class Utilities
             ];
             $addTask = true;
             if ($maxPagesCount !== null) {
-                if (sizeof($data['p']) > $maxPagesCount) {
+                if (count($data['p']) > $maxPagesCount) {
                     $data['p'][$pageID]['s'] = -1;
                     $addTask = false;
                 }

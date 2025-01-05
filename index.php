@@ -20,8 +20,8 @@ $context->classes
     ->add('BearCMS\Audits\Internal\Utilities', 'classes/Audits/Internal/Utilities.php');
 
 $app->bearCMS->addons
-    ->register('bearcms/audits-addon', function (\BearCMS\Addons\Addon $addon) use ($app) {
-        $addon->initialize = function (array $options = []) use ($app) {
+    ->register('bearcms/audits-addon', function (\BearCMS\Addons\Addon $addon) use ($app): void {
+        $addon->initialize = function (array $options = []) use ($app): void {
 
             $app->shortcuts
                 ->add('audits', function () {
@@ -51,20 +51,21 @@ $app->bearCMS->addons
             });
 
             \BearCMS\Internal\ServerCommands::add('auditsGetResults', function (array $data) use ($app) {
-                return $app->audits->getResults($data['id']);
+                $result = $app->audits->getResults($data['id']);
+                return $result;
             });
 
             $app->tasks
-                ->define('bearcms-audits-initialize', function (string $id) {
+                ->define('bearcms-audits-initialize', function (string $id): void {
                     Utilities::initializeAudit($id);
                 })
-                ->define('bearcms-audits-check-page', function (array $data) {
+                ->define('bearcms-audits-check-page', function (array $data): void {
                     Utilities::checkPage($data['id'], $data['pageID']);
                 })
-                ->define('bearcms-audits-check-page-link', function (array $data) { // v1
+                ->define('bearcms-audits-check-page-link', function (array $data): void { // v1
                     Utilities::checkPageLink($data['id'], $data['pageID'], $data['linkID']);
                 })
-                ->define('bearcms-audits-check-link', function (array $data) {
+                ->define('bearcms-audits-check-link', function (array $data): void {
                     Utilities::checkLink($data['id'], $data['url']);
                 });
         };

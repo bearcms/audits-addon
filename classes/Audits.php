@@ -54,7 +54,7 @@ class Audits
      * @param integer $maxPagesCount The maximum number of pages to analyze
      * @return string The ID of the audit requested.
      */
-    public function request(int $maxPagesCount = null): string
+    public function request(?int $maxPagesCount = null): string
     {
         $id = md5(uniqid());
         $app = App::get();
@@ -106,7 +106,7 @@ class Audits
                     $allPagesAreDone = false;
                 } else {
                     $allPagesAreDone = true;
-                    $totalPages = sizeof($data['p']);
+                    $totalPages = count($data['p']);
                     $pagePercent = $totalPages > 0 ? 100 / $totalPages : 100;
                     foreach ($data['p'] as $pageData) {
                         $allLinksAreDone = false;
@@ -114,7 +114,7 @@ class Audits
                             $allLinksAreDone = true;
                         }
                         if (isset($pageData['l'])) {
-                            $totalPageLinks = sizeof($pageData['l']);
+                            $totalPageLinks = count($pageData['l']);
                             if ($totalPageLinks > 0) {
                                 $percent += $pagePercent / 2;
                                 $pageLinkPercent = ($pagePercent / 2) / $totalPageLinks;
