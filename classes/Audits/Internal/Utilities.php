@@ -69,14 +69,14 @@ class Utilities
         if ($result['status'] === 200) {
             $robotsLines = explode("\n", $result['content']);
             $sitemapURL = '';
-            $data['a'] = true;
+            $data['a'] = true; // Allow search engines
             foreach ($robotsLines as $robotsLine) {
                 $robotsLine = strtolower(trim($robotsLine));
                 if (strlen($robotsLine) === 0) {
                     continue;
                 }
                 if (str_replace(' ', '', $robotsLine) === 'disallow:/') {
-                    $data['a'] = false;
+                    $data['a'] = false; // Disallow search engines
                 } elseif (strpos($robotsLine, 'sitemap:') === 0) {
                     $sitemapURL = trim(substr($robotsLine, 8));
                 }
@@ -87,13 +87,26 @@ class Utilities
                 $processSitemapURL($data['u'] . 'sitemap.xml');
             }
         } else {
-            $data['e'] = 'There is a problem with ' . $robotsURL . ' (status:' . $result['status'] . ')';
+            $data['e'] = 'There is a problem with ' . $robotsURL . ' (status:' . $result['status'] . ')'; // Error
+        }
+
+        $result = self::makeRequest($data['u']);
+        if ($result['status'] === 200) {
+            $dom = new HTML5DOMDocument();
+            $dom->loadHTML($result['content'], HTML5DOMDocument::ALLOW_DUPLICATE_IDS);
+            $headElement = $dom->querySelector('head');
+            if ($headElement !== null) {
+                $googleSiteVerificationElement = $headElement->querySelector('meta[name="google-site-verification"]');
+                if ($googleSiteVerificationElement !== null) {
+                    $data['g'] = $googleSiteVerificationElement->getAttribute('content'); // Google site verification
+                }
+            }
         }
 
         $urls = array_unique($urls);
 
         $currentTime = time();
-        $data['p'] = [];
+        $data['p'] = []; // Pages
         $tasksData = [];
         foreach ($urls as $url) {
             $pageID = md5($url);
@@ -142,11 +155,12 @@ class Utilities
             $pageData['d'] = date('c');
             self::setURLStatusInCache($id, $fullPageURL, $result['status'], $pageData['d']);
             if ($result['status'] === 200) {
-                $pageData['t'] = null;
-                $pageData['e'] = null;
-                $pageData['k'] = null;
-                $pageData['l'] = [];
-                $pageData['c'] = null;
+                $pageData['t'] = null; // Title
+                $pageData['e'] = null; // Description
+                $pageData['k'] = null; // Keywords
+                $pageData['g'] = null; // Open Graph image
+                $pageData['l'] = []; // Links
+                $pageData['c'] = null; // Content
                 $dom = new HTML5DOMDocument();
                 $dom->loadHTML($result['content'], HTML5DOMDocument::ALLOW_DUPLICATE_IDS);
                 $headElement = $dom->querySelector('head');
@@ -162,6 +176,10 @@ class Utilities
                     $metaKeywordsElement = $headElement->querySelector('meta[name="keywords"]');
                     if ($metaKeywordsElement !== null) {
                         $pageData['k'] = $metaKeywordsElement->getAttribute('content');
+                    }
+                    $metaOGImageElement = $headElement->querySelector('meta[property="og:image"]');
+                    if ($metaOGImageElement !== null) {
+                        $pageData['g'] = $metaOGImageElement->getAttribute('content');
                     }
                 }
                 $bodyElement = $dom->querySelector('body');
@@ -185,9 +203,11 @@ class Utilities
                         $counter++;
                         $linkID = md5($linkLocation . '-' . $counter);
                         $shortURL = self::getShortURL($data['u'], $linkLocation);
+                        $linkTitle = trim((string)$link->getAttribute('title'));
                         $pageData['l'][$linkID] = [
-                            'u' => $shortURL,
-                            's' => null
+                            'u' => $shortURL, // Short URL
+                            't' => $linkTitle, // Title
+                            's' => null // Status
                         ];
                         list($linkStatus, $linkDate) = self::getURLStatusFromCache($id, $linkLocation);
                         if ($linkStatus !== null) {

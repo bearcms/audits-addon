@@ -157,7 +157,8 @@ class Audits
             'id' => $id,
             'dateRequested' => null,
             'pages' => [],
-            'allowSearchEngines' => null
+            'allowSearchEngines' => null,
+            'googleSiteVerification' => null
         ];
         $data = Utilities::getData($id);
         if ($data !== null) {
@@ -171,6 +172,7 @@ class Audits
                         $pageLinksResult[] = [
                             'id' => $pageLinkID,
                             'url' => Utilities::getFullURL($data['u'], $pageLink['u']),
+                            'title' => isset($pageLink['t']) ? $pageLink['t'] : null,
                             'status' => $pageLink['s'],
                             'dateChecked' => $pageLink['d']
                         ];
@@ -185,10 +187,12 @@ class Audits
                     'description' => isset($pageData['e']) ? $pageData['e'] : null,
                     'keywords' => isset($pageData['k']) ? $pageData['k'] : null,
                     'content' => isset($pageData['c']) ? $pageData['c'] : null,
+                    'openGraphImage' => isset($pageData['g']) ? $pageData['g'] : null,
                     'links' => $pageLinksResult
                 ];
             }
             $result['allowSearchEngines'] = $data['a'];
+            $result['googleSiteVerification'] = isset($data['g']) ? $data['g'] : null;
         }
         return $result;
     }
